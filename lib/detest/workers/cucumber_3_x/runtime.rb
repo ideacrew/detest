@@ -4,6 +4,20 @@ module Detest
   module Workers
     module Cucumber
       class Runtime < ::Cucumber::Runtime
+        @@detest_feature_log = []
+        @@detest_at_exit_registered = false
+
+        def self.print_feature_log
+          log = @@detest_feature_log
+          return if log.empty?
+
+          puts "\n" + "=" * 80
+          puts "[DETEST] FEATURE EXECUTION ORDER (#{log.size} files):"
+          puts "=" * 80
+          log.each_with_index { |path, i| puts "  #{i + 1}. #{path}" }
+          puts "=" * 80
+        end
+
         def test_file_started(event)
           @test_start_time = Time.now
           @current_test_file = event.path
@@ -33,6 +47,12 @@ module Detest
 
         def run!(adapter)
           @adapter = adapter
+          @@detest_feature_log = []
+          unless @@detest_at_exit_registered
+            @@detest_at_exit_registered = true
+            at_exit { Detest::Workers::Cucumber::Runtime.print_feature_log }
+          end
+
           load_step_definitions
           install_wire_plugin
           fire_after_configuration_hook
@@ -56,6 +76,7 @@ module Detest
           adapter.record_worker
           if ENV["DETEST_RERUN"] == "true"
               while f_file = adapter.fpop
+                @@detest_feature_log << f_file
                 @configuration.notify :test_file_started, f_file
                 fs = process_feature_file(f_file)
                 compile fs, receiver, filters
@@ -63,6 +84,7 @@ module Detest
               end
             else
               while f_file = adapter.pop
+                @@detest_feature_log << f_file
                 @configuration.notify :test_file_started, f_file
                 fs = process_feature_file(f_file)
                 compile fs, receiver, filters
