@@ -7,8 +7,15 @@ module Detest
       attr_reader :redis, :redis_session_key, :redis_session_failure_key,
                   :redis_session_retry_key, :redis_session_runner_key
 
+      DEFAULT_RESILIENCY_OPTIONS = {
+        connect_timeout: 3,
+        read_timeout: 5,
+        write_timeout: 5,
+        reconnect_attempts: [0.25, 0.5, 1, 2]
+      }.freeze
+
       def initialize(session_key, *args, **kwargs)
-        @redis = Redis.new(*args, **kwargs)
+        @redis = Redis.new(*args, **DEFAULT_RESILIENCY_OPTIONS.merge(kwargs))
         @redis_session_key = "__#{session_key}_tp_adapter_test_storage" 
         @redis_session_failure_key = "__#{session_key}_tp_adapter_test_failure_storage"
         @redis_session_result_key = "__#{session_key}_tp_adapter_test_results_storage"
