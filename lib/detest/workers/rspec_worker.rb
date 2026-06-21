@@ -13,6 +13,8 @@ module Detest
         @reporter = @runner.configuration.reporter
         @reporter.start(0)
         @passed = true
+        @spec_log = []
+        at_exit { print_spec_log }
       end
 
       def setup
@@ -70,7 +72,16 @@ module Detest
         0
       end
 
+      def print_spec_log
+        puts "\n" + "=" * 80
+        puts "[DETEST] SPEC EXECUTION ORDER (#{@spec_log.size} files):"
+        puts "=" * 80
+        @spec_log.each_with_index { |spec, i| puts "  #{i + 1}. #{spec}" }
+        puts "=" * 80
+      end
+
       def run_spec(adapter, spec_path)
+        @spec_log << spec_path
         start_time = Time.now
         example_groups = @runner.world.example_groups.select do |eg|
           Pathname(File.expand_path(eg.file_path)).relative_path_from(@our_cwd).to_s == spec_path
