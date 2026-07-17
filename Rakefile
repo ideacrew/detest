@@ -17,7 +17,7 @@ namespace :self_test do
       end
     end
 
-    cmd = "DETEST_RERUN=true bundle exec ruby rspec_worker_example.rb --require spec_helper.rb --format progress --force-color examples"
+    cmd = "DETEST_RUN_ATTEMPT=2 bundle exec ruby rspec_worker_example.rb --require spec_helper.rb --format progress --force-color examples"
     PTY.spawn(cmd) do |stdout, stdin, pid|
       while (data = stdout.read(1))
         print data

@@ -54,20 +54,11 @@ module Detest
           end
 
           adapter.record_worker
-          if ENV["DETEST_RERUN"] == "true"
-              while f_file = adapter.fpop
-                @configuration.notify :test_file_started, f_file
-                fs = process_feature_file(f_file)
-                compile fs, receiver, filters
-                @configuration.notify :test_file_finished, f_file
-              end
-            else
-              while f_file = adapter.pop
-                @configuration.notify :test_file_started, f_file
-                fs = process_feature_file(f_file)
-                compile fs, receiver, filters
-                @configuration.notify :test_file_finished, f_file
-              end
+          while f_file = adapter.pop
+            @configuration.notify :test_file_started, f_file
+            fs = process_feature_file(f_file)
+            compile fs, receiver, filters
+            @configuration.notify :test_file_finished, f_file
           end
           @configuration.notify :test_run_finished
           adapter.end_worker
