@@ -24,24 +24,16 @@ module Detest
       def run(adapter)
         adapter.record_worker
         @configuration.with_suite_hooks do
-          if ENV["DETEST_RERUN"] == "true"
-            run_failures(adapter)
-          else
-            run_until_empty(adapter)
-          end
+          run_until_empty(adapter)
         end
       ensure
         adapter.close
       end
 
-      def run_failures(adapter)
-        while spec = adapter.fpop
-          run_spec(adapter, spec)
-          bail?(adapter, spec)
-        end
-        finish(adapter)
-      end
-
+      # The adapter already chose the set to drain (published specs on attempt
+      # 1, the prior attempt's failures on a rerun). Failures are logged to a
+      # separate per-attempt set, so nothing recorded here can re-enter this
+      # loop.
       def run_until_empty(adapter)
         while spec = adapter.pop
           run_spec(adapter, spec)

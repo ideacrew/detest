@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = "detest"
-  s.version     = "0.1.0"
+  s.version     = "0.2.0"
   s.summary     = "Distribute a list of tests."
   s.description = "Distribute a list of tests until there aren't any left."
   s.homepage    = 'https://github.com/TreyE/detests'
