@@ -41,12 +41,13 @@ describe Detest::Adapters::RedisAdapter, "key expiration" do
     )
   end
 
-  it "defaults to a TTL that outlasts enroll's stale-PR auto-close window" do
+  it "defaults to a TTL that outlasts GitHub Actions' rerun window" do
     default_adapter = described_class.new("#{session_key}-default")
     default_adapter.enqueue(["a_spec.rb"])
     expect(default_adapter.redis.ttl(default_adapter.redis_session_key))
       .to be_within(5).of(described_class::DEFAULT_KEY_TTL_SECONDS)
-    expect(described_class::DEFAULT_KEY_TTL_SECONDS).to be > 30 * 24 * 60 * 60 # GitHub's rerun limit
+    expect(described_class::DEFAULT_KEY_TTL_SECONDS)
+      .to be > described_class::GITHUB_RERUN_WINDOW_DAYS * 24 * 60 * 60
     default_adapter.redis.del(default_adapter.redis_session_key)
   end
 

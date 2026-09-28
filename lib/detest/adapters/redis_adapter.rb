@@ -10,22 +10,23 @@ module Detest
       # treating an empty result as "nothing to rerun" would be a false pass.
       class MissingRetryQueueError < StandardError; end
 
-      # ideacrew/enroll's full-suite.yml sets DETEST_SESSION_ID to the GitHub
-      # Actions run ID, which stays constant across "re-run failed jobs"
-      # attempts (github.run_attempt just increments) for as long as GitHub
-      # allows reruns at all. That's the clock that matters here, not job
-      # duration: a rerun that lands after these keys expire must not be
-      # mistaken for "no failures" (see MissingRetryQueueError / `fpop`).
+      # A consumer's session key (e.g. DETEST_SESSION_ID in ideacrew/enroll's
+      # full-suite.yml) is typically the CI run ID, which stays constant
+      # across "re-run" attempts for as long as the CI provider allows
+      # reruns at all. That's the clock that matters here, not job duration:
+      # a rerun that lands after these keys expire must not be mistaken for
+      # "no failures" (see MissingRetryQueueError / `fpop`).
       #
-      # Pinned to ideacrew/enroll's own .github/workflows/stale.yml, which
-      # auto-closes an inactive PR 30 days (days-before-stale) + 7 days
-      # (actions/stale's default days-before-close, not overridden there)
-      # after its last activity — 37 days. That's also comfortably past
-      # GitHub's own 30-day rerun limit, so it bounds key growth while
-      # outlasting every rerun window a still-open PR could hit.
-      ENROLL_STALE_PR_DAYS = 30
-      ENROLL_STALE_PR_CLOSE_GRACE_DAYS = 7
-      DEFAULT_KEY_TTL_SECONDS = (ENROLL_STALE_PR_DAYS + ENROLL_STALE_PR_CLOSE_GRACE_DAYS) * 24 * 60 * 60
+      # GitHub Actions allows reruns for up to 30 days after a run. The
+      # margin on top is headroom past that limit, not a hard requirement -
+      # 7 days happens to match how long a consumer's own PR-staleness grace
+      # period commonly is (e.g. ideacrew/enroll's .github/workflows/stale.yml
+      # today), which is a reasonable proxy for "how much longer might this
+      # still matter," but nothing here depends on any specific consumer's
+      # config.
+      GITHUB_RERUN_WINDOW_DAYS = 30
+      RERUN_WINDOW_MARGIN_DAYS = 7
+      DEFAULT_KEY_TTL_SECONDS = (GITHUB_RERUN_WINDOW_DAYS + RERUN_WINDOW_MARGIN_DAYS) * 24 * 60 * 60
 
       attr_reader :redis, :redis_session_key, :redis_session_failure_key,
                   :redis_session_retry_key, :redis_session_runner_key,
